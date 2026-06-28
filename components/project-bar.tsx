@@ -49,7 +49,7 @@ export function ProjectBar({
 
   if (mode === "new" || mode === "rename") {
     return (
-      <div className="mb-6 flex items-center gap-2 rounded-lg border bg-card p-2">
+      <div className="flex items-center gap-2">
         <span className="pl-1 text-xs text-muted-foreground">
           {mode === "new" ? "New project" : "Rename project"}
         </span>
@@ -77,7 +77,7 @@ export function ProjectBar({
   }
 
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card p-2">
+    <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex items-center gap-2 pl-1">
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
           Project

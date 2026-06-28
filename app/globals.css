@@ -90,3 +90,15 @@
     color: var(--foreground);
   }
 }
+
+/* Diagonal hatched page gutters (flanking the framed content column).
+   Theme-aware: thin lines in the foreground colour at low opacity. */
+.page-gutter {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 7px,
+    color-mix(in oklab, var(--foreground) 7%, transparent) 7px,
+    color-mix(in oklab, var(--foreground) 7%, transparent) 8px
+  );
+}

@@ -66,10 +66,12 @@ lightness is fake (RGB mid-range), so same-`L` hues differ wildly in brightness.
 
 ## Locked decisions
 
-- **16-stop default**:
-  `0,10,25,50,100,200,300,400,500,600,700,800,850,900,950,1000`. With the rank-based
-  ladder these are 16 evenly-stepped slots; the labels are nominal names (a `200`
-  token, not "20 % down the scale"). One ramp feeds both light and dark.
+- **18-stop default**:
+  `0,10,25,50,100,200,300,400,500,600,700,800,850,900,925,950,975,1000`. With the
+  rank-based ladder these are 18 evenly-stepped slots; the labels are nominal names
+  (a `200` token, not "20 % down the scale"). The dark end is finely stepped
+  (`850,900,925,950,975,1000`) for richer dark-mode surface layering. One ramp feeds
+  both light and dark.
 - **Stop 0 is a faint tint, NOT pure white** (`lTop = 0.97`). Tried pure-white-0
   (`lTop = 1.0`) but then any label sitting ~1% from white (10, 20…) was forced to
   near-white mush — geometric, no curve fixes it. Researching uicolors.app /
@@ -91,6 +93,11 @@ lightness is fake (RGB mid-range), so same-`L` hues differ wildly in brightness.
   competing hues, so colours are judged truthfully. Typography is a modern sans
   (system stack) with mono reserved for values/code — restyled after uicolors.app:
   the palette is a full-width hero of large rounded swatches, wide centred layout.
+  The chrome is **flat** — no card frames or shadows (`Card` in `ui/card.tsx` is a
+  transparent flow container). The content is a centred column (≤1560px) framed by
+  **diagonal-striped page gutters** (`.page-gutter` in `globals.css`, theme-aware)
+  with vertical edge rules, and sections are divided by **full-width horizontal
+  rules** — restyled after semanticwayfinder.com.
 - **Gamut**: `fitGamut` (RampParams, **default on** via UI; toggle in the preview
   header) pulls each generated stop's chroma down to the sRGB boundary —
   preserving its L and H — so nothing clips (`maxChromaInGamut` in `lib/oklch.ts`).

@@ -55,7 +55,7 @@ test("adding a stop re-distributes the ladder (ordinal), endpoints fixed", () =>
   const base = buildSwatches(DEFAULT_PARAMS);
   const extra = buildSwatches({
     ...DEFAULT_PARAMS,
-    stops: [...DEFAULT_PARAMS.stops, 925],
+    stops: [...DEFAULT_PARAMS.stops, 350],
   });
   // Endpoints stay pinned to lTop/lBottom...
   assert.ok(Math.abs(base[0].l - extra[0].l) < 1e-9);
@@ -63,9 +63,9 @@ test("adding a stop re-distributes the ladder (ordinal), endpoints fixed", () =>
     Math.abs(base[base.length - 1].l - extra[extra.length - 1].l) < 1e-9,
   );
   // ...but interior stops shift, since a new rank re-spaces the slots, and the
-  // ordering around the inserted label is correct.
-  assert.notEqual(L(base, 900), L(extra, 900));
-  assert.ok(L(extra, 900) > L(extra, 925) && L(extra, 925) > L(extra, 950));
+  // inserted label sorts into place by lightness.
+  assert.notEqual(L(base, 300), L(extra, 300));
+  assert.ok(L(extra, 300) > L(extra, 350) && L(extra, 350) > L(extra, 400));
 });
 
 test("pin overrides exactly and flags the stop", () => {

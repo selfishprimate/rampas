@@ -66,7 +66,8 @@ export interface Project {
 }
 
 export const DEFAULT_STOPS = [
-  0, 10, 25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 850, 900, 950, 1000,
+  0, 10, 25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 850, 900, 925, 950, 975,
+  1000,
 ];
 
 export const DEFAULT_PARAMS: RampParams = {

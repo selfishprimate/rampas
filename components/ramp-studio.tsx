@@ -302,8 +302,10 @@ export function RampStudio() {
     });
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-[1680px] px-5 py-8 sm:px-8 lg:px-12">
-      <header className="mb-7 flex items-start justify-between gap-4">
+    <div className="grid min-h-screen w-full grid-cols-[minmax(1.5rem,1fr)_minmax(0,1560px)_minmax(1.5rem,1fr)]">
+      <div aria-hidden className="page-gutter border-r border-border" />
+      <main className="min-w-0">
+      <header className="flex items-start justify-between gap-4 border-b border-border px-6 py-6">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-2xl font-semibold tracking-tight">
             OKLCH Ramp Studio
@@ -328,22 +330,24 @@ export function RampStudio() {
       </header>
 
       {activeProjectId && (
-        <ProjectBar
-          projects={projects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            rampCount: p.ramps.length,
-          }))}
-          activeId={activeProjectId}
-          onSwitch={switchProject}
-          onCreate={createProject}
-          onRename={renameProject}
-          onDelete={deleteProject}
-        />
+        <div className="border-b border-border px-6 py-4">
+          <ProjectBar
+            projects={projects.map((p) => ({
+              id: p.id,
+              name: p.name,
+              rampCount: p.ramps.length,
+            }))}
+            activeId={activeProjectId}
+            onSwitch={switchProject}
+            onCreate={createProject}
+            onRename={renameProject}
+            onDelete={deleteProject}
+          />
+        </div>
       )}
 
       {/* Hero — the palette is the centerpiece */}
-      <Card className="mb-6 gap-5 py-6">
+      <Card className="gap-5 border-b border-border py-6">
         <CardHeader className="flex-col items-stretch gap-4 px-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-2 sm:w-96">
             <div className="flex flex-1 flex-col gap-1.5">
@@ -375,7 +379,7 @@ export function RampStudio() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5">
+            <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
               <span className="text-[10px] text-muted-foreground">surface</span>
               <label
                 className="flex items-center gap-1"
@@ -405,7 +409,7 @@ export function RampStudio() {
               </label>
             </div>
             <label
-              className="flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] text-muted-foreground"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-muted/60 px-2.5 py-1.5 text-[11px] text-muted-foreground"
               title="Pull each stop's chroma into the sRGB gamut so nothing clips (⚠)"
             >
               <input
@@ -423,7 +427,11 @@ export function RampStudio() {
           </div>
         </CardHeader>
         <CardContent className="px-6">
-          <RampPreview swatches={swatches} surface={surface} />
+          {hydrated ? (
+            <RampPreview swatches={swatches} surface={surface} />
+          ) : (
+            <div className="h-56 w-full animate-pulse rounded-2xl bg-muted/30" />
+          )}
         </CardContent>
       </Card>
 
@@ -563,7 +571,11 @@ export function RampStudio() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-6">
-              <ChromaCurve swatches={swatches} cMax={params.cMax} />
+              {hydrated ? (
+                <ChromaCurve swatches={swatches} cMax={params.cMax} />
+              ) : (
+                <div className="h-56 w-full animate-pulse rounded-xl bg-muted/20" />
+              )}
             </CardContent>
           </Card>
 
@@ -593,6 +605,8 @@ export function RampStudio() {
           </Card>
         </div>
       </div>
-    </main>
+      </main>
+      <div aria-hidden className="page-gutter border-l border-border" />
+    </div>
   );
 }

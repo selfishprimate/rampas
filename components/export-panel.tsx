@@ -91,7 +91,7 @@ export function ExportPanel({ current, saved }: Props) {
       </div>
 
       <div className="relative">
-        <pre className="max-h-72 overflow-auto rounded-lg border bg-card p-4 text-[11px] leading-relaxed text-foreground/90">
+        <pre className="max-h-72 overflow-auto rounded-xl bg-muted/50 p-4 text-[11px] leading-relaxed text-foreground/90">
           <code>{code}</code>
         </pre>
         <div className="absolute right-2 top-2 flex gap-1.5">

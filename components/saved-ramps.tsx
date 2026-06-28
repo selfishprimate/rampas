@@ -29,8 +29,8 @@ export function SavedRamps({ saved, activeId, onLoad, onDelete }: Props) {
           <li
             key={r.id}
             className={
-              "group flex items-center gap-3 rounded-lg border p-2 transition-colors " +
-              (active ? "border-ring bg-accent/40" : "hover:bg-accent/30")
+              "group flex items-center gap-3 rounded-lg p-2 transition-colors " +
+              (active ? "bg-accent/60" : "hover:bg-accent/40")
             }
           >
             <button
