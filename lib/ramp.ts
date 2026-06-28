@@ -16,6 +16,13 @@ export interface RampParams {
   /** Bell-curve width (in lightness units). Smaller = chroma falls off faster toward the extremes. */
   sigma: number;
   /**
+   * When true, chroma is held constant at `cMax` for every stop instead of following
+   * the Gaussian bell (lPeak/sigma are ignored). `fitGamut` still pulls each stop into
+   * the sRGB gamut, so the extremes dip rather than clip. The simpler "only L changes"
+   * look — duller mid-tones than the bell, but flat saturation.
+   */
+  constantChroma?: boolean;
+  /**
    * Lightness-ladder curve (1 = linear). >1 lifts the mid-tones lighter — matching
    * how Tailwind / IBM Carbon distribute lightness — via a mid-weighted gamma that
    * leaves the lightest steps (0,10,20) unwashed. Endpoints (lTop/lBottom) unchanged.
@@ -74,18 +81,18 @@ export const DEFAULT_PARAMS: RampParams = {
   hue: 264,
   hueShift: 0,
   lTop: 0.97,
-  lBottom: 0.185,
+  lBottom: 0.14,
   lPeak: 0.62,
   cMax: 0.15,
-  sigma: 0.22,
+  sigma: 0.45,
   stops: DEFAULT_STOPS,
 };
 
-/** Default lightness curve for the UI. 1 = even steps; <1 packs tone toward the
- *  dark end (deeper, denser darks for dark-mode surface layering) while keeping the
- *  light steps dramatic; >1 lifts the mid-tones lighter (Tailwind-like) but spreads
- *  the darks. 0.8 keeps a dense, deep dark cluster without crushing the mid-tones. */
-export const DEFAULT_L_CURVE = 0.8;
+/** Default lightness-curve strength for the UI. 1 = even (linear) steps; >1 bends
+ *  the ladder into an S-curve — gentle, close steps at BOTH ends (subtle pale tints
+ *  up top, dense deep tones at the bottom for dark-mode surfaces) with a steeper,
+ *  more vivid middle. ~1.3 mirrors how Tailwind distributes lightness. */
+export const DEFAULT_L_CURVE = 1.3;
 
 /**
  * Lightness at a normalised position `t` (0 = lightest stop, 1 = darkest).
@@ -98,14 +105,13 @@ export const DEFAULT_L_CURVE = 0.8;
  * 2–3 % of the range) into near-identical tones; rank spacing gives every adjacent
  * pair an even, dramatic step.
  *
- * `lCurve` shapes the descent via a mid-weighted gamma whose exponent eases from 1
- * at the light end to `lCurve` at the dark end (`t^(1+(lCurve−1)·t)`):
- *   - `lCurve = 1`: even steps.
- *   - `lCurve < 1`: steps SHRINK toward the dark end → a deeper, denser dark cluster
- *     (close near-black tones for dark-mode surface layering) while the light steps
- *     stay dramatic. This is the default.
- *   - `lCurve > 1`: steps GROW toward the dark end → mid-tones lift lighter
- *     (Tailwind-like) but the darks spread apart.
+ * `lCurve` shapes the descent as an **S-curve** (logistic-style),
+ * `tᵏ / (tᵏ + (1−t)ᵏ)` with `k = lCurve`:
+ *   - `lCurve = 1`: even (linear) steps.
+ *   - `lCurve > 1`: gentle, close steps at BOTH ends — subtle pale tints up top
+ *     (the 50→100-style accelerating light cluster Tailwind uses) AND dense deep
+ *     tones at the bottom (for dark-mode surface layering) — with a steeper,
+ *     more vivid middle. This is the default (~1.3).
  * lTop/lBottom (the endpoints) are unchanged; only the in-between shape bends.
  */
 function lightnessAt(
@@ -114,7 +120,12 @@ function lightnessAt(
   lBottom: number,
   lCurve = 1,
 ): number {
-  const shaped = lCurve === 1 ? t : Math.pow(t, 1 + (lCurve - 1) * t);
+  let shaped = t;
+  if (lCurve !== 1 && t > 0 && t < 1) {
+    const a = Math.pow(t, lCurve);
+    const b = Math.pow(1 - t, lCurve);
+    shaped = a / (a + b);
+  }
   return lTop + (lBottom - lTop) * shaped;
 }
 
@@ -144,7 +155,9 @@ export function buildSwatches(p: RampParams): Swatch[] {
     let l = lightnessAt(t, p.lTop, p.lBottom, p.lCurve);
     const pos = (p.lTop - l) / span;
     let h = p.hue + p.hueShift * (pos - posPeak);
-    let c = p.cMax * Math.exp(-((l - lPeak) ** 2) / (2 * p.sigma * p.sigma));
+    let c = p.constantChroma
+      ? p.cMax
+      : p.cMax * Math.exp(-((l - lPeak) ** 2) / (2 * p.sigma * p.sigma));
     // Optionally pull chroma into the sRGB gamut (keeps L & H), so no stop clips.
     if (p.fitGamut) c = maxChromaInGamut(l, h, c);
 

@@ -8,8 +8,8 @@ the chroma bell, the lime fix, etc.), see `docs/PROJECT_LOG.md`.
 
 A perceptual **primitive colour-ramp generator** for design-system token work,
 built to feed an Invisible design system on a shadcn / Tailwind v4 stack. It
-generates OKLCH ramps (0–1000 stops), matches brand colours, previews on
-light/dark surfaces, organises ramps into projects, and exports to Tailwind
+generates OKLCH ramps (0–1000 stops), matches brand colours, organises ramps into
+projects, and exports to Tailwind
 `@theme`, CSS `:root`, or DTCG JSON. Everything is local (no backend yet);
 state persists in `localStorage`.
 
@@ -36,21 +36,23 @@ separate.
 1. **Lightness ladder — rank-based.** A stop's lightness comes from its **rank**
    (index in the sorted stop list), NOT its label value — `lightnessAt(t, …)` in
    `lib/ramp.ts` with `t = index / (count − 1)`. The map is
-   `lTop + (lBottom−lTop)·t^(1+(lCurve−1)·t)`; `lCurve` (default **0.8** in the UI,
-   1 = even steps) is a *mid-weighted* gamma: **<1 packs tone toward the dark end**
-   (deeper, denser darks for dark-mode surface layering) while keeping light steps
-   dramatic; **>1 lifts the mid-tones lighter** (Tailwind-like) but spreads the
-   darks. This is how **Tailwind, Material, IBM Carbon and Lyft
+   `lTop + (lBottom−lTop)·S(t)` where `S` is a logistic **S-curve**
+   `tᵏ/(tᵏ+(1−t)ᵏ)`, `k = lCurve` (default **1.3** in the UI, 1 = even/linear).
+   `lCurve > 1` gives gentle, close steps at **both** ends — subtle pale tints up
+   top (the accelerating 50→100-style light cluster Tailwind uses) AND dense deep
+   tones at the bottom (dark-mode surfaces) — with a steeper, more vivid middle.
+   This is how **Tailwind, Material, IBM Carbon and Lyft
    ColorBox** all work: labels (10, 25, 500…) are just *names for evenly-spaced
    slots*; lightness is spread across the slots, not proportional to the number.
    Consequences, all intended and test-locked:
-   - **Every adjacent pair steps evenly** (≈0.04–0.07 L). The old label-proportional
-     ladder crushed clustered light labels (0,10,25 sit in the top ~2–3 % of the
-     range) into near-identical tones; rank spacing fixes that — 0→10→25→50 now
-     step as dramatically as 800→850→900. `lTop` is 0.97 so the lightest stop is a
-     faint tint (≈ Tailwind-50 / Carbon-10), not pure white — pure white is a
-     separate `base.white` alias, the way uicolors/Tailwind/Material keep it out
-     of the scale.
+   - **Rank spacing, S-curve shaped.** The old label-proportional ladder crushed
+     clustered light labels (0,10,25 sit in the top ~2–3 % of the range) into
+     near-identical tones; rank spacing fixes that. The S-curve then gives the light
+     cluster Tailwind's *accelerating* feel (0→10 ≈ 0.022 L, 50→100 ≈ 0.049) instead
+     of dead-even steps, and keeps the dark cluster dense. `lTop` is 0.97 so the
+     lightest stop is a faint tint (≈ Tailwind-50 / Carbon-10), not pure white —
+     pure white is a separate `base.white` alias, the way uicolors/Tailwind/Material
+     keep it out of the scale.
    - **Trade-off:** because lightness is rank-based, adding/removing a stop
      **re-spaces** the others (only the lTop/lBottom endpoints stay pinned). This
      replaces the old "adding a stop never moves the others" property — given up
@@ -118,7 +120,7 @@ RampParams { hue, hueShift, lTop, lBottom, lPeak, cMax, sigma, stops[], pin?, fi
 `localStorage` keys:
 - `oklch-ramp:projects:v1` → `{ projects, activeProjectId }`
 - `oklch-ramp:draft` → working ramp `{ name, params, activeId }`
-- `oklch-ramp:prefs` → `{ theme, lightBg, darkBg }`
+- `oklch-ramp:prefs` → `{ theme }`
 - `oklch-ramp:saved` → **legacy** flat ramp list; auto-migrated into a first
   project on load. `normalizeParams()` derives `lPeak` from old `lAnchor`.
 
@@ -132,7 +134,7 @@ lib/export.ts    toTheme / toRoot / toDtcg + filenames
 components/ramp-studio.tsx   orchestrator: all state, persistence, project + ramp actions
 components/project-bar.tsx   switch / create / rename / delete projects
 components/color-match.tsx   hex/HSL/OKLCH input, nearest-stop readout, snap/pin
-components/ramp-preview.tsx  swatch strip on the chosen surface, gamut/pin markers, copy
+components/ramp-preview.tsx  swatch strip (large rounded swatches), gamut/pin markers, copy
 components/chroma-curve.tsx  SVG: lightness line + chroma bell, dots in true colour
 components/export-panel.tsx  format tabs + scope (this ramp / all in project) + copy/download
 components/saved-ramps.tsx   ramps in the active project (load/delete)
@@ -152,7 +154,7 @@ test/*.test.ts   node:test coverage for oklch / ramp / export
 
 ## Roadmap (in order of intended next steps)
 
-1. **Per-swatch contrast readouts** against the chosen light/dark surfaces
+1. **Per-swatch contrast readouts** against light/dark backgrounds
    (WCAG 2 ratio + APCA Lc). Note: WCAG contrast ≠ OKLCH L — compute from the
    actual hex. Especially needed for light fills like lime (black text on lime).
 2. **Semantic mapping layer** — a per-mode role→stop table
@@ -160,8 +162,7 @@ test/*.test.ts   node:test coverage for oklch / ramp / export
    `on-primary`, …) emitted as **DTCG aliases**. Light maps to darker stops,
    dark to lighter (e.g. `primary` light=600 / dark=400), validated by contrast,
    not by arithmetic. `on-primary` for a light brand = `base.black`.
-3. **Per-project surfaces** (currently global app prefs).
-4. **Productization** (musing, not started): auth, cloud persistence/multi-device,
+3. **Productization** (musing, not started): auth, cloud persistence/multi-device,
    shareable project links, and publishing each project as a shadcn
    `registry:base` endpoint so teams can `npx shadcn add`. The data model is
    already project→ramp, so this is an additive backend layer.

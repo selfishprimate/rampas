@@ -78,6 +78,8 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui,
+    sans-serif;
 }
 
 @layer base {

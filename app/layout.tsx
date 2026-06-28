@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "OKLCH Ramp Studio",
+  title: "Rampas",
   description:
     "Perceptual color ramp generator with bell-curve chroma. Build primitive token ramps and export to Tailwind, CSS, or DTCG.",
 };
@@ -22,7 +30,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={spaceGrotesk.variable}>
       <body className="font-sans antialiased">
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {children}

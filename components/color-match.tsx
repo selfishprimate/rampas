@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Pin } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,6 +9,7 @@ import {
   parseColor,
   round,
   type ColorFormat,
+  type Oklch,
 } from "@/lib/oklch";
 import {
   buildSwatches,
@@ -34,6 +34,49 @@ const PLACEHOLDER: Record<ColorFormat, string> = {
 const clamp = (x: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, x));
 
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0;
+  let s = 0;
+  const d = max - min;
+  if (d !== 0) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      default:
+        h = (r - g) / d + 4;
+    }
+    h /= 6;
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+/** Format the ramp's vivid point (lPeak/cMax/hue) as a value string in the given format. */
+function formatColor(
+  l: number,
+  c: number,
+  h: number,
+  format: ColorFormat,
+): string {
+  if (format === "oklch") {
+    return `${round(l, 3)} ${round(c, 3)} ${Math.round(h)}`;
+  }
+  const { hex, rgb } = oklchToHex(l, c, h);
+  if (format === "hex") return hex;
+  const [hh, ss, ll] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+  return `${hh} ${ss}% ${ll}%`;
+}
+
 function Segmented<T extends string>({
   options,
   value,
@@ -54,7 +97,7 @@ function Segmented<T extends string>({
           className={
             "rounded-md px-2.5 py-1 transition-colors " +
             (value === o
-              ? "bg-background text-foreground shadow-sm"
+              ? "bg-background text-foreground"
               : "text-muted-foreground")
           }
         >
@@ -67,10 +110,20 @@ function Segmented<T extends string>({
 
 export function ColorMatch({ params, pinnedLabel, onApply, onPin }: Props) {
   const [format, setFormat] = useState<ColorFormat>("hex");
-  const [text, setText] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
   const [mode, setMode] = useState<"snap" | "pin">("snap");
 
-  const parsed = useMemo(() => parseColor(text, format), [text, format]);
+  // The input mirrors the ramp's vivid point — so changing hue/chroma/lPeak
+  // from the sliders keeps it filled and in sync. While the user is typing,
+  // their draft takes over instead.
+  const derived = useMemo(
+    () => formatColor(params.lPeak, params.cMax, params.hue, format),
+    [params.lPeak, params.cMax, params.hue, format],
+  );
+  const value = editing ? draft : derived;
+
+  const parsed = useMemo(() => parseColor(value, format), [value, format]);
 
   const view = useMemo(() => {
     if (!parsed) return null;
@@ -83,42 +136,59 @@ export function ColorMatch({ params, pinnedLabel, onApply, onPin }: Props) {
     return { enteredHex, nearest, rampSwatch };
   }, [parsed, params]);
 
-  const apply = () => {
-    if (!parsed) return;
-    onApply({
-      hue: round(parsed.h, 2),
-      lPeak: clamp(parsed.l, 0.05, 0.999),
-      cMax: clamp(round(parsed.c, 4), 0, 0.37),
-    });
-    if (mode === "pin" && view?.nearest != null) {
-      onPin({
-        label: view.nearest,
-        l: parsed.l,
-        c: parsed.c,
-        h: parsed.h,
-      });
+  const applyPin = (p: Oklch, m: "snap" | "pin") => {
+    const nearest = nearestStopToLightness(params, p.l);
+    if (m === "pin" && nearest != null) {
+      onPin({ label: nearest, l: p.l, c: p.c, h: p.h });
     } else {
       onPin(null);
     }
   };
 
-  const invalid = text.trim().length > 0 && !parsed;
+  // Apply as the user types.
+  const onChange = (text: string) => {
+    setEditing(true);
+    setDraft(text);
+    const p = parseColor(text, format);
+    if (!p) return;
+    onApply({
+      hue: round(p.h, 2),
+      lPeak: clamp(p.l, 0.05, 0.999),
+      cMax: clamp(round(p.c, 4), 0, 0.37),
+    });
+    applyPin(p, mode);
+  };
+
+  const onModeChange = (m: "snap" | "pin") => {
+    setMode(m);
+    if (parsed) applyPin(parsed, m);
+  };
+
+  const invalid = editing && draft.trim().length > 0 && !parsed;
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <Label className="text-xs text-muted-foreground">Match a colour</Label>
+        <Label className="text-xs text-muted-foreground">Match A Colour</Label>
         <Segmented
           options={FORMATS}
           value={format}
-          onChange={setFormat}
+          onChange={(f) => {
+            setEditing(false);
+            setFormat(f);
+          }}
           labels={{ hex: "HEX", hsl: "HSL", oklch: "OKLCH" }}
         />
       </div>
 
       <Input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+        onBlur={() => setEditing(false)}
         placeholder={PLACEHOLDER[format]}
         spellCheck={false}
         className={
@@ -169,17 +239,12 @@ export function ColorMatch({ params, pinnedLabel, onApply, onPin }: Props) {
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <Segmented
-              options={["snap", "pin"] as const}
-              value={mode}
-              onChange={setMode}
-              labels={{ snap: "Snap", pin: "Pin exact" }}
-            />
-            <Button size="sm" onClick={apply}>
-              Apply
-            </Button>
-          </div>
+          <Segmented
+            options={["snap", "pin"] as const}
+            value={mode}
+            onChange={onModeChange}
+            labels={{ snap: "Snap", pin: "Pin Exact" }}
+          />
           <p className="text-[10px] text-muted-foreground/70">
             {mode === "snap"
               ? "Sets hue + vivid point so the brand sits near a generated stop."

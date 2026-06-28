@@ -15,11 +15,12 @@ import type { Ramp } from "@/lib/ramp";
 interface Props {
   current: Ramp;
   saved: Ramp[];
+  defaultScope?: "current" | "all";
 }
 
-export function ExportPanel({ current, saved }: Props) {
+export function ExportPanel({ current, saved, defaultScope = "current" }: Props) {
   const [format, setFormat] = useState<ExportFormat>("theme");
-  const [scope, setScope] = useState<"current" | "all">("current");
+  const [scope, setScope] = useState<"current" | "all">(defaultScope);
   const [copied, setCopied] = useState(false);
 
   const hasSet = saved.length > 0;
@@ -69,11 +70,11 @@ export function ExportPanel({ current, saved }: Props) {
             className={
               "rounded-md px-2.5 py-1 transition-colors " +
               (scope === "current"
-                ? "bg-background text-foreground shadow-sm"
+                ? "bg-background text-foreground"
                 : "text-muted-foreground")
             }
           >
-            This ramp
+            This Ramp
           </button>
           <button
             onClick={() => hasSet && setScope("all")}
@@ -81,11 +82,11 @@ export function ExportPanel({ current, saved }: Props) {
             className={
               "rounded-md px-2.5 py-1 transition-colors disabled:opacity-40 " +
               (scope === "all"
-                ? "bg-background text-foreground shadow-sm"
+                ? "bg-background text-foreground"
                 : "text-muted-foreground")
             }
           >
-            All in project ({saved.length})
+            All In Project ({saved.length})
           </button>
         </div>
       </div>

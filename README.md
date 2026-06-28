@@ -65,13 +65,11 @@ them in, or leave them if the clip is negligible.
 Pure white/black are intentionally **not** in the ramp. Feed `onColor` tokens
 from a separate `base.white` / `base.black` alias at the semantic layer.
 
-## Light / dark preview
+## Light / dark theme
 
-A switch in the header flips the whole instrument — and the preview surface —
-between light and dark, so you can judge every stop on the background it will
-actually sit on. Set the **light** and **dark** background colours from the
-`surface` control in the preview header (the `L` / `D` swatches). Theme and
-surfaces persist in `localStorage`.
+A switch in the header flips the whole instrument between light and dark. The
+swatches sit directly on the framed page so every stop is judged on the actual
+surface. Theme persists in `localStorage`.
 
 ## Match a brand colour
 
