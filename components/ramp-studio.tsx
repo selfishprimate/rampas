@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { SiteHeader } from "@/components/site-header";
 import { PageShell } from "@/components/page-shell";
 import { RampEditor } from "@/components/ramp-editor";
@@ -144,35 +145,41 @@ export function RampStudio() {
           onSave={save}
           onReset={resetDraft}
           hydrated={hydrated && draftLoaded}
+          belowCurve={
+            <>
+              <Separator />
+              <Card className="gap-4 py-6">
+                <CardHeader className="px-6">
+                  <h2 className="font-display text-sm font-medium leading-none">
+                    Export
+                  </h2>
+                </CardHeader>
+                <CardContent className="px-6">
+                  <ExportPanel current={current} saved={savedRamps} />
+                </CardContent>
+              </Card>
+
+              <Separator />
+
+              <Card className="gap-4 py-6">
+                <CardHeader className="px-6">
+                  <h2 className="font-display text-sm font-medium leading-none">
+                    Ramps In {activeProject?.name ?? "project"}
+                  </h2>
+                </CardHeader>
+                <CardContent className="px-6">
+                  <SavedRamps
+                    saved={savedRamps}
+                    activeId={activeId}
+                    onLoad={load}
+                    onDelete={del}
+                  />
+                </CardContent>
+              </Card>
+            </>
+          }
         />
       </div>
-
-      <Card className="gap-4 border-b border-border py-6">
-        <CardHeader className="px-6">
-          <h2 className="font-display text-sm font-medium leading-none">
-            Export
-          </h2>
-        </CardHeader>
-        <CardContent className="px-6">
-          <ExportPanel current={current} saved={savedRamps} />
-        </CardContent>
-      </Card>
-
-      <Card className="gap-4 border-b border-border py-6">
-        <CardHeader className="px-6">
-          <h2 className="font-display text-sm font-medium leading-none">
-            Ramps In {activeProject?.name ?? "project"}
-          </h2>
-        </CardHeader>
-        <CardContent className="px-6">
-          <SavedRamps
-            saved={savedRamps}
-            activeId={activeId}
-            onLoad={load}
-            onDelete={del}
-          />
-        </CardContent>
-      </Card>
     </PageShell>
   );
 }

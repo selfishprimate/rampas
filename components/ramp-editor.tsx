@@ -64,6 +64,8 @@ interface Props {
   onReset?: () => void;
   /** Gate the colour-computed UI behind hydration to avoid SSR mismatch. */
   hydrated?: boolean;
+  /** Extra content rendered in the right column, below the chroma curve (home page). */
+  belowCurve?: React.ReactNode;
 }
 
 export function RampEditor({
@@ -77,6 +79,7 @@ export function RampEditor({
   onSave,
   onReset,
   hydrated = true,
+  belowCurve,
 }: Props) {
   const swatches = useMemo(() => buildSwatches(params), [params]);
   const oog = swatches.filter((s) => !s.inGamut).length;
@@ -337,6 +340,7 @@ export function RampEditor({
               )}
             </CardContent>
           </Card>
+          {belowCurve}
         </div>
       </div>
     </div>
